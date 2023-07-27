@@ -1,0 +1,66 @@
+﻿@page "/category"
+@using blazorappdemo;
+
+@inject ILogger<Categories> logger;
+@inject ICategoryService categoryService;
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@inject IToastService toastService
+
+<PageTitle>Categorias</PageTitle>
+<ModuleTitle Title="Categorias" />
+
+
+<button class="btn btn-success mb-3" @onclick="@(()=>NavigationManager.NavigateTo("/addCategories"))">Agregar Categoria</button>
+
+@if (categories?.Count > 0)
+{
+	<div class="categories-container">
+		@foreach (var category in categories)
+		{
+			<div class="card">
+				<img class="card-img-top" src="@category.Image" alt="Category" loading="lazy" width="270" height="210" />
+				<div class="card-body">
+					<h4><b>@category.Name</b></h4>
+					<button title="Eliminar" class="btn btn-danger btn-delete" @onclick="@(()=>DeleteCategory(category))">
+						<span class="oi oi-trash"></span>
+					</button>
+				</div>
+			</div>
+		}
+	</div>
+}
+else
+{
+	<p>No hay categorias para mostrar</p>
+}
+@code {
+	private List<Category>? categories;
+
+	protected override async Task OnInitializedAsync()
+	{
+		await GetCategories();
+	}
+
+	private async Task GetCategories()
+	{
+		categories = await categoryService.Get();
+	}
+
+	private async Task DeleteCategory(Category category)
+	{
+		if (!await JSRuntime.InvokeAsync<bool>("confirm", $"¡Está seguro de eliminar la categoria {category.Name}?"))
+		return;
+		try
+		{
+			await categoryService.Delete(category.Id);
+			toastService.ShowSuccess($"La Categoria {category.Name} ha sido eliminado");
+			await GetCategories();
+		}
+		catch (System.Exception)
+		{
+			toastService.ShowError($"La categoria: {category.Name} no se ha podido eliminar. Verifique que no esté siendo usada por algún producto.");
+			@* throw; *@
+		}
+	}
+}

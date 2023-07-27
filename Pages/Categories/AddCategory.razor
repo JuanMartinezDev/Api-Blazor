@@ -1,0 +1,72 @@
+﻿@page "/addCategories"
+@using blazorappdemo;
+
+@inject ICategoryService categoryService;
+@inject NavigationManager NavigationManager;
+@inject IToastService toastService;
+
+<PageTitle>Agregar Categoria</PageTitle>
+
+<ModuleTitle Title="Agregar Categoria" />
+
+<button class="btn btn-dark" @onclick="@(() => NavigationManager.NavigateTo("/category"))">Regresar</button>
+
+<EditForm Model="@category" OnSubmit="@Save">
+    <div class="row">
+        <div class="col-8 form-group">
+            <label for="name" class="col-form-label">Nombre</label>
+            <InputText id="name" @bind-Value="category.Name" required class="form-control" />
+        </div>
+    </div>
+
+    <div class="row">
+
+        <div class="col form-group">
+            <label for="image" class="col-form-label">Url de la imagen</label>
+            <InputText id="image" @bind-Value="category.Image" required class="form-control" />
+        </div>
+    </div>
+
+    <hr>
+    <button class="btn btn-primary" type="submit">Save</button>
+</EditForm>
+
+@code
+{
+    private Category category = new();
+    private bool IsValidUrl(string url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            return false;
+
+        try
+        {
+            var uri = new Uri(url);
+            return uri.IsAbsoluteUri;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+    private async Task Save()
+    {
+        try
+        {
+            if (!IsValidUrl(category.Image))
+            {
+                toastService.ShowError("Ingrese una URL válida.");
+                return;
+            }
+            category.Image = new string(category.Image);
+
+            await categoryService.Add(category);
+            toastService.ShowSuccess("Categoria Agregada");
+            NavigationManager.NavigateTo("/category");
+        }
+        catch (System.Exception)
+        {
+            toastService.ShowError("Ingrese correctamente la información.");
+        }
+    }
+}

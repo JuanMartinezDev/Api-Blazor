@@ -1,0 +1,59 @@
+﻿@page "/counter/{counterStartParameter?}"
+@inject ILogger<Counter> logger;
+
+<PageTitle>Counter</PageTitle>
+<ModuleTitle Title="A Counter"/>
+
+<p role="status">Current count: @currentCount</p>
+<p role="status">Secound Descendent Count: @secondCount </p>
+
+<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+
+@code {
+    private int currentCount = 0;
+    private int secondCount = 100;
+
+    [Parameter]
+    public string? counterStartParameter { get; set; }
+
+    [SupplyParameterFromQuery]
+    [Parameter]
+    public string? counterStartFromQuery { get; set; }
+
+    public override async Task SetParametersAsync(ParameterView parameters)
+    {
+        logger.LogInformation("Dentro de SetParametersAsync");
+
+        if (parameters.TryGetValue<string>(nameof(counterStartParameter), out var value))
+        {
+            counterStartParameter = value;
+        }
+
+        await base.SetParametersAsync(parameters);
+    }
+
+    protected override void OnInitialized()
+    {
+        int tempInt;
+        logger.LogInformation("Dentro de OnInitialized");
+        int.TryParse(counterStartParameter ?? currentCount.ToString(), out currentCount);
+        var exist = int.TryParse(counterStartFromQuery, out tempInt);
+        secondCount = exist ? tempInt : secondCount;
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        logger.LogInformation("Dentro de OnAfterRenderAsync");
+    }
+
+    protected override void OnParametersSet()
+    {
+        logger.LogInformation("Recibiendo parametros");
+    }
+
+    private void IncrementCount()
+    {
+        currentCount++;
+        secondCount--;
+    }
+}
